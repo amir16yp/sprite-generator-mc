@@ -44,7 +44,7 @@ public class MainApp extends JFrame {
 
     private void initUI() {
         JPanel panel = new JPanel(new BorderLayout());
-
+    
         colorChooser = new JColorChooser();
         AbstractColorChooserPanel[] panels = colorChooser.getChooserPanels();
         for (AbstractColorChooserPanel accp : panels) {
@@ -52,22 +52,26 @@ public class MainApp extends JFrame {
                 colorChooser.removeChooserPanel(accp);
             }
         }
-
-        panel.add(colorChooser, BorderLayout.WEST);
-        
-        colorChooser.getSelectionModel().addChangeListener(new ChangeListener() 
-        {
+    
+        // Remove the alpha channel from the color selection model
+        colorChooser.getSelectionModel().addChangeListener(new ChangeListener() {
             @Override
-            public void stateChanged(ChangeEvent e)
-            {
+            public void stateChanged(ChangeEvent e) {
+                Color newColor = colorChooser.getColor();
+                if (newColor.getAlpha() != 255) {
+                    colorChooser.setColor(new Color(newColor.getRed(), newColor.getGreen(), newColor.getBlue()));
+                }
                 updatePreview();
             }
         });
+    
+        panel.add(colorChooser, BorderLayout.WEST);
+    
         JPanel inputPanel = new JPanel(new FlowLayout());
         inputPanel.add(new JLabel("Material Name:"));
         materialNameField = new JTextField(20);
         inputPanel.add(materialNameField);
-
+    
         generateButton = new JButton("Generate Sprites");
         generateButton.addActionListener(new ActionListener() {
             @Override
@@ -76,9 +80,9 @@ public class MainApp extends JFrame {
             }
         });
         inputPanel.add(generateButton);
-
+    
         panel.add(inputPanel, BorderLayout.SOUTH);
-
+    
         spriteComboBox = new JComboBox<>();
         spriteComboBox.addActionListener(new ActionListener() {
             @Override
@@ -88,12 +92,12 @@ public class MainApp extends JFrame {
         });
         JScrollPane listScrollPane = new JScrollPane(spriteComboBox);
         panel.add(listScrollPane, BorderLayout.EAST);
-
+    
         previewLabel = new JLabel();
         previewLabel.setPreferredSize(new Dimension(256, 256));
         previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(previewLabel, BorderLayout.NORTH);
-
+    
         add(panel);
     }
 
@@ -145,22 +149,22 @@ public class MainApp extends JFrame {
         if (selectedSprite != null) {
             ClassLoader cl = MainApp.class.getClassLoader();
             InputStream inputStream = cl.getResourceAsStream(selectedSprite);
-
+    
             if (inputStream != null) {
                 Image image = new Image(16, 16, inputStream);
                 image.createImage(colourSet);
-
+    
                 // Assuming Image class has a method to get the image as a BufferedImage
                 BufferedImage previewImage = image.getBufferedImage();
-
+    
                 // Scale the image to a larger size for better visibility
                 int scaleFactor = 5; // Increase this value to make the image larger
                 BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = scaledImage.createGraphics();
-                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
                 g2d.dispose();
-
+    
                 ImageIcon icon = new ImageIcon(scaledImage);
                 previewLabel.setIcon(icon);
             }
