@@ -6,6 +6,22 @@ MAIN_CLASS=spritegenerator.MainApp
 JAR_NAME=mcspritegen.jar
 MANIFEST_FILE=Manifest.txt
 
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+if ! command_exists javac; then
+    echo "Error: 'javac' command not found. Make sure JDK is installed and in your PATH."
+    exit 1
+fi
+
+# Check for rsync
+if ! command_exists rsync; then
+    echo "Error: 'rsync' command not found. Please install rsync to proceed."
+    exit 1
+fi
+
+
 # Step 1: Prepare output directory and copy non-java/class files
 echo "Preparing output directory..."
 mkdir -p $PROJECT_DIR/out
