@@ -37,7 +37,6 @@ public class MainApp extends JFrame {
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
         initUI();
         loadSpriteList();
     }
@@ -91,7 +90,7 @@ public class MainApp extends JFrame {
             }
         });
         JScrollPane listScrollPane = new JScrollPane(spriteComboBox);
-        panel.add(listScrollPane, BorderLayout.EAST);
+        panel.add(listScrollPane, BorderLayout.CENTER);
     
         previewLabel = new JLabel();
         previewLabel.setPreferredSize(new Dimension(256, 256));
@@ -122,18 +121,10 @@ public class MainApp extends JFrame {
         }
     }
 
-    private void updatePreview() {
+    private ColourSet getColorSet()
+    {
         Color selectedColor = colorChooser.getColor();
-    
-        if (selectedColor == null) {
-            return;
-        }
-    
-        int inputR = selectedColor.getRed();
-        int inputG = selectedColor.getGreen();
-        int inputB = selectedColor.getBlue();
-    
-        ColourSet colourSet = new ColourSet(inputR, inputG, inputB);
+        ColourSet colourSet = new ColourSet(selectedColor.getRed(), selectedColor.getGreen(), selectedColor.getBlue());
     
         // Colours that will not change between all sprites
         colourSet.resetColor(new Color(73, 54, 21));
@@ -144,6 +135,11 @@ public class MainApp extends JFrame {
         colourSet.resetColor(new Color(143, 143, 144));
         colourSet.resetColor(new Color(127, 127, 128));
         colourSet.resetColor(new Color(104, 104, 105));
+        return colourSet;
+    }
+
+    private void updatePreview() {
+    
     
         String selectedSprite = (String) spriteComboBox.getSelectedItem();
         if (selectedSprite != null) {
@@ -152,7 +148,7 @@ public class MainApp extends JFrame {
     
             if (inputStream != null) {
                 Image image = new Image(16, 16, inputStream);
-                image.createImage(colourSet);
+                image.createImage(getColorSet());
     
                 // Assuming Image class has a method to get the image as a BufferedImage
                 BufferedImage previewImage = image.getBufferedImage();
@@ -180,22 +176,6 @@ public class MainApp extends JFrame {
             return;
         }
     
-        int inputR = selectedColor.getRed();
-        int inputG = selectedColor.getGreen();
-        int inputB = selectedColor.getBlue();
-    
-        ColourSet colourSet = new ColourSet(inputR, inputG, inputB);
-    
-        // Colours that will not change between all sprites
-        colourSet.resetColor(new Color(73, 54, 21));
-        colourSet.resetColor(new Color(104, 78, 30));
-        colourSet.resetColor(new Color(137, 103, 39));
-        colourSet.resetColor(new Color(40, 30, 11));
-        colourSet.resetColor(new Color(116, 116, 117));
-        colourSet.resetColor(new Color(143, 143, 144));
-        colourSet.resetColor(new Color(127, 127, 128));
-        colourSet.resetColor(new Color(104, 104, 105));
-    
         String outputDir = materialName;
         Path outputPath = Paths.get(outputDir);
         if (!Files.exists(outputPath)) {
@@ -219,7 +199,7 @@ public class MainApp extends JFrame {
     
             String itemType = splitStringAtUnderscore(file)[1];
             Image image = new Image(16, 16, inputStream);
-            image.createImage(colourSet);
+            image.createImage(getColorSet());
             image.writeToNewFile(outputDir + "/" + materialName + "_" + itemType + ".png");
         }
     
