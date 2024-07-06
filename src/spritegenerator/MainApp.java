@@ -7,7 +7,6 @@ import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,13 +27,13 @@ public class MainApp extends JFrame {
     private JColorChooser colorChooser;
     private JTextField materialNameField;
     private JButton generateButton;
-    private JComboBox<String> spriteComboBox;
-    private JLabel previewLabel;
+    private JPanel previewPanel;
     private List<String> fileList;
+    private JSpinner scaleSpinner; // New JSpinner for scale factor
 
     public MainApp() {
         setTitle("Sprite Generator");
-        setSize(800, 600);
+        setSize(1000,800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         initUI();
@@ -43,7 +42,7 @@ public class MainApp extends JFrame {
 
     private void initUI() {
         JPanel panel = new JPanel(new BorderLayout());
-    
+
         colorChooser = new JColorChooser();
         AbstractColorChooserPanel[] panels = colorChooser.getChooserPanels();
         for (AbstractColorChooserPanel accp : panels) {
@@ -51,7 +50,7 @@ public class MainApp extends JFrame {
                 colorChooser.removeChooserPanel(accp);
             }
         }
-    
+
         // Remove the alpha channel from the color selection model
         colorChooser.getSelectionModel().addChangeListener(new ChangeListener() {
             @Override
@@ -63,14 +62,14 @@ public class MainApp extends JFrame {
                 updatePreview();
             }
         });
-    
+
         panel.add(colorChooser, BorderLayout.WEST);
-    
+
         JPanel inputPanel = new JPanel(new FlowLayout());
         inputPanel.add(new JLabel("Material Name:"));
         materialNameField = new JTextField(20);
         inputPanel.add(materialNameField);
-    
+
         generateButton = new JButton("Generate Sprites");
         generateButton.addActionListener(new ActionListener() {
             @Override
@@ -79,26 +78,30 @@ public class MainApp extends JFrame {
             }
         });
         inputPanel.add(generateButton);
-    
-        panel.add(inputPanel, BorderLayout.SOUTH);
-    
-        spriteComboBox = new JComboBox<>();
-        spriteComboBox.addActionListener(new ActionListener() {
+
+        // Add Scale Factor Spinner
+        inputPanel.add(new JLabel("Preview Scale Factor:"));
+        SpinnerNumberModel scaleModel = new SpinnerNumberModel(5, 1, 20, 1); // Initial value, min, max, step
+        scaleSpinner = new JSpinner(scaleModel);
+        scaleSpinner.addChangeListener(new ChangeListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void stateChanged(ChangeEvent e) {
                 updatePreview();
             }
         });
-        JScrollPane listScrollPane = new JScrollPane(spriteComboBox);
-        panel.add(listScrollPane, BorderLayout.CENTER);
-    
-        previewLabel = new JLabel();
-        previewLabel.setPreferredSize(new Dimension(256, 256));
-        previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(previewLabel, BorderLayout.NORTH);
-    
+        inputPanel.add(scaleSpinner);
+
+        panel.add(inputPanel, BorderLayout.SOUTH);
+
+        previewPanel = new JPanel();
+        previewPanel.setLayout(new GridLayout(0, 5, 10, 10)); // Adjust columns (5) and gaps as needed
+
+        JScrollPane scrollPane = new JScrollPane(previewPanel);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
         add(panel);
     }
+
 
     private void loadSpriteList() {
         fileList = new ArrayList<>();
@@ -116,16 +119,76 @@ public class MainApp extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         for (String file : fileList) {
-            spriteComboBox.addItem(file);
+            addPreviewImage(file);
         }
     }
 
-    private ColourSet getColorSet()
-    {
+    private void updatePreview() {
+        // Clear the preview panel before updating
+        previewPanel.removeAll();
+        previewPanel.revalidate();
+        previewPanel.repaint();
+    
+        // Iterate through each sprite file and add its preview to the panel
+        for (String spritePath : fileList) {
+            ClassLoader cl = MainApp.class.getClassLoader();
+            InputStream inputStream = cl.getResourceAsStream(spritePath);
+    
+            if (inputStream != null) {
+                Image image = new Image(16, 16, inputStream);
+                image.createImage(getColorSet());
+    
+                BufferedImage previewImage = image.getBufferedImage();
+    
+                // Scale the image to a larger size for better visibility
+                int scaleFactor = (int) scaleSpinner.getValue(); // Increase this value to make the image larger
+                BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2d = scaledImage.createGraphics();
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
+                g2d.dispose();
+    
+                ImageIcon icon = new ImageIcon(scaledImage);
+                JLabel imageLabel = new JLabel(icon);
+                previewPanel.add(imageLabel);
+            }
+        }
+    
+        // Refresh the panel to reflect the changes
+        previewPanel.revalidate();
+        previewPanel.repaint();
+    }
+
+    private void addPreviewImage(String spritePath) {
+        ClassLoader cl = MainApp.class.getClassLoader();
+        InputStream inputStream = cl.getResourceAsStream(spritePath);
+
+        if (inputStream != null) {
+            Image image = new Image(16, 16, inputStream);
+            image.createImage(getColorSet());
+
+            BufferedImage previewImage = image.getBufferedImage();
+
+            // Scale the image to a larger size for better visibility
+            int scaleFactor = 5; // Increase this value to make the image larger
+            BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = scaledImage.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
+            g2d.dispose();
+
+            ImageIcon icon = new ImageIcon(scaledImage);
+            JLabel imageLabel = new JLabel(icon);
+            previewPanel.add(imageLabel);
+        }
+    }
+
+    private ColourSet getColorSet() {
         Color selectedColor = colorChooser.getColor();
         ColourSet colourSet = new ColourSet(selectedColor.getRed(), selectedColor.getGreen(), selectedColor.getBlue());
-    
+
         // Colours that will not change between all sprites
         colourSet.resetColor(new Color(73, 54, 21));
         colourSet.resetColor(new Color(104, 78, 30));
@@ -138,44 +201,15 @@ public class MainApp extends JFrame {
         return colourSet;
     }
 
-    private void updatePreview() {
-    
-    
-        String selectedSprite = (String) spriteComboBox.getSelectedItem();
-        if (selectedSprite != null) {
-            ClassLoader cl = MainApp.class.getClassLoader();
-            InputStream inputStream = cl.getResourceAsStream(selectedSprite);
-    
-            if (inputStream != null) {
-                Image image = new Image(16, 16, inputStream);
-                image.createImage(getColorSet());
-    
-                // Assuming Image class has a method to get the image as a BufferedImage
-                BufferedImage previewImage = image.getBufferedImage();
-    
-                // Scale the image to a larger size for better visibility
-                int scaleFactor = 5; // Increase this value to make the image larger
-                BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g2d = scaledImage.createGraphics();
-                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
-                g2d.dispose();
-    
-                ImageIcon icon = new ImageIcon(scaledImage);
-                previewLabel.setIcon(icon);
-            }
-        }
-    }
-
     private void generateSprites() {
         Color selectedColor = colorChooser.getColor();
         String materialName = materialNameField.getText();
-    
+
         if (selectedColor == null || materialName.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please select a color and enter a material name.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    
+
         String outputDir = materialName;
         Path outputPath = Paths.get(outputDir);
         if (!Files.exists(outputPath)) {
@@ -187,22 +221,22 @@ public class MainApp extends JFrame {
                 return;
             }
         }
-    
+
         for (String file : fileList) {
             ClassLoader cl = MainApp.class.getClassLoader();
             InputStream inputStream = cl.getResourceAsStream(file);
-    
+
             if (inputStream == null) {
                 JOptionPane.showMessageDialog(this, "Failed to load sprite file: " + file, "Error", JOptionPane.ERROR_MESSAGE);
                 continue;
             }
-    
+
             String itemType = splitStringAtUnderscore(file)[1];
             Image image = new Image(16, 16, inputStream);
             image.createImage(getColorSet());
             image.writeToNewFile(outputDir + "/" + materialName + "_" + itemType + ".png");
         }
-    
+
         JOptionPane.showMessageDialog(this, "Sprites generated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
