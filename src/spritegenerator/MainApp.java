@@ -196,7 +196,7 @@ public class MainApp extends JFrame {
 
     private void generateSprites() {
         Color selectedColor = colorChooser.getColor();
-        String materialName = materialNameField.getText();
+        String materialName = materialNameField.getText().toLowerCase();
 
         if (selectedColor == null || materialName.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please select a color and enter a material name.", "Input Error", JOptionPane.ERROR_MESSAGE);
@@ -227,10 +227,15 @@ public class MainApp extends JFrame {
             // Reset the input stream for the Image constructor
             inputStream = cl.getResourceAsStream(file);
 
-            String itemType = splitStringAtUnderscore(file)[1];
+            // Extract the filename from the full path
+            String fileName = new File(file).getName();
+
+            // Replace "iron" with the new material name
+            String newFileName = fileName.replace("iron", materialName);
+
             Image image = new Image(inputStream);
             image.createImage(getColorSet());
-            image.writeToNewFile(outputDir + "/" + materialName + "_" + itemType + ".png");
+            image.writeToNewFile(outputDir + "/" + newFileName);
         }
 
         JOptionPane.showMessageDialog(this, "Sprites generated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
