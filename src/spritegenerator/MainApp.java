@@ -22,6 +22,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.imageio.ImageIO;
 
 public class MainApp extends JFrame {
     private JColorChooser colorChooser;
@@ -29,11 +30,11 @@ public class MainApp extends JFrame {
     private JButton generateButton;
     private JPanel previewPanel;
     private List<String> fileList;
-    private JSpinner scaleSpinner; // New JSpinner for scale factor
+    private JSpinner scaleSpinner;
 
     public MainApp() {
         setTitle("Sprite Generator");
-        setSize(1000,800);
+        setSize(1000, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         initUI();
@@ -51,7 +52,6 @@ public class MainApp extends JFrame {
             }
         }
 
-        // Remove the alpha channel from the color selection model
         colorChooser.getSelectionModel().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -79,9 +79,8 @@ public class MainApp extends JFrame {
         });
         inputPanel.add(generateButton);
 
-        // Add Scale Factor Spinner
         inputPanel.add(new JLabel("Preview Scale Factor:"));
-        SpinnerNumberModel scaleModel = new SpinnerNumberModel(5, 1, 20, 1); // Initial value, min, max, step
+        SpinnerNumberModel scaleModel = new SpinnerNumberModel(5, 1, 20, 1);
         scaleSpinner = new JSpinner(scaleModel);
         scaleSpinner.addChangeListener(new ChangeListener() {
             @Override
@@ -94,14 +93,13 @@ public class MainApp extends JFrame {
         panel.add(inputPanel, BorderLayout.SOUTH);
 
         previewPanel = new JPanel();
-        previewPanel.setLayout(new GridLayout(0, 5, 10, 10)); // Adjust columns (5) and gaps as needed
+        previewPanel.setLayout(new GridLayout(0, 5, 10, 10));
 
         JScrollPane scrollPane = new JScrollPane(previewPanel);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         add(panel);
     }
-
 
     private void loadSpriteList() {
         fileList = new ArrayList<>();
@@ -126,37 +124,37 @@ public class MainApp extends JFrame {
     }
 
     private void updatePreview() {
-        // Clear the preview panel before updating
         previewPanel.removeAll();
         previewPanel.revalidate();
         previewPanel.repaint();
-    
-        // Iterate through each sprite file and add its preview to the panel
+
         for (String spritePath : fileList) {
             ClassLoader cl = MainApp.class.getClassLoader();
             InputStream inputStream = cl.getResourceAsStream(spritePath);
-    
+            //System.out.println(spritePath);
             if (inputStream != null) {
-                Image image = new Image(16, 16, inputStream);
+                // Reset the input stream for the Image constructor
+                inputStream = cl.getResourceAsStream(spritePath);
+
+                Image image = new Image(inputStream);
                 image.createImage(getColorSet());
-    
+                int width = image.getWidth();
+                int height = image.getHeight();
                 BufferedImage previewImage = image.getBufferedImage();
-    
-                // Scale the image to a larger size for better visibility
-                int scaleFactor = (int) scaleSpinner.getValue(); // Increase this value to make the image larger
-                BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
+
+                int scaleFactor = (int) scaleSpinner.getValue();
+                BufferedImage scaledImage = new BufferedImage(width * scaleFactor, height * scaleFactor, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = scaledImage.createGraphics();
                 g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
+                g2d.drawImage(previewImage, 0, 0, width * scaleFactor, height * scaleFactor, null);
                 g2d.dispose();
-    
+
                 ImageIcon icon = new ImageIcon(scaledImage);
                 JLabel imageLabel = new JLabel(icon);
                 previewPanel.add(imageLabel);
             }
         }
-    
-        // Refresh the panel to reflect the changes
+
         previewPanel.revalidate();
         previewPanel.repaint();
     }
@@ -166,17 +164,22 @@ public class MainApp extends JFrame {
         InputStream inputStream = cl.getResourceAsStream(spritePath);
 
         if (inputStream != null) {
-            Image image = new Image(16, 16, inputStream);
-            image.createImage(getColorSet());
+            // Reset the input stream for the Image constructor
+            inputStream = cl.getResourceAsStream(spritePath);
 
+            Image image = new Image(inputStream);
+            System.out.println(spritePath);
+            image.createImage(getColorSet());
+            image.printImageInfo();
+            int width = image.getWidth();
+            int height = image.getHeight();
             BufferedImage previewImage = image.getBufferedImage();
 
-            // Scale the image to a larger size for better visibility
-            int scaleFactor = 5; // Increase this value to make the image larger
-            BufferedImage scaledImage = new BufferedImage(16 * scaleFactor, 16 * scaleFactor, BufferedImage.TYPE_INT_ARGB);
+            int scaleFactor = 5;
+            BufferedImage scaledImage = new BufferedImage(width * scaleFactor, height * scaleFactor, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = scaledImage.createGraphics();
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g2d.drawImage(previewImage, 0, 0, 16 * scaleFactor, 16 * scaleFactor, null);
+            g2d.drawImage(previewImage, 0, 0, width * scaleFactor, height * scaleFactor, null);
             g2d.dispose();
 
             ImageIcon icon = new ImageIcon(scaledImage);
@@ -188,16 +191,6 @@ public class MainApp extends JFrame {
     private ColourSet getColorSet() {
         Color selectedColor = colorChooser.getColor();
         ColourSet colourSet = new ColourSet(selectedColor.getRed(), selectedColor.getGreen(), selectedColor.getBlue());
-
-        // Colours that will not change between all sprites
-        colourSet.resetColor(new Color(73, 54, 21));
-        colourSet.resetColor(new Color(104, 78, 30));
-        colourSet.resetColor(new Color(137, 103, 39));
-        colourSet.resetColor(new Color(40, 30, 11));
-        colourSet.resetColor(new Color(116, 116, 117));
-        colourSet.resetColor(new Color(143, 143, 144));
-        colourSet.resetColor(new Color(127, 127, 128));
-        colourSet.resetColor(new Color(104, 104, 105));
         return colourSet;
     }
 
@@ -231,8 +224,11 @@ public class MainApp extends JFrame {
                 continue;
             }
 
+            // Reset the input stream for the Image constructor
+            inputStream = cl.getResourceAsStream(file);
+
             String itemType = splitStringAtUnderscore(file)[1];
-            Image image = new Image(16, 16, inputStream);
+            Image image = new Image(inputStream);
             image.createImage(getColorSet());
             image.writeToNewFile(outputDir + "/" + materialName + "_" + itemType + ".png");
         }

@@ -1,42 +1,43 @@
 package spritegenerator.colourprocessing;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ColourSet {
-    public int[] customColoursR = new int[255];
-    public int[] customColoursG = new int[255];
-    public int[] customColoursB = new int[255];
+    private Color baseColor;
+    private Map<Integer, Integer> colorMap = new HashMap<>();
 
     public ColourSet(int R, int G, int B) {
+        this.baseColor = new Color(R, G, B);
+        initializeColorMap();
+    }
 
-        int newR;
-        int newG;
-        int newB;
-
-        for (int i = 0; i < 255; i++) {
-            newR = (i + (R * 2)) / 2;
-            newG = (i + (G * 2)) / 2;
-            newB = (i + (B * 2)) / 2;
-
-            newR = forceMin0AndMax255(newR);
-            newG = forceMin0AndMax255(newG);
-            newB = forceMin0AndMax255(newB);
-
-            customColoursR[i] = newR;
-            customColoursG[i] = newG;
-            customColoursB[i] = newB;
+    private void initializeColorMap() {
+        for (int i = 0; i < 256; i++) {
+            Color grayColor = new Color(i, i, i);
+            Color mappedColor = blendColors(grayColor, baseColor, 0.8f);
+            colorMap.put(grayColor.getRGB(), mappedColor.getRGB());
         }
-
-    }
-    private static int forceMin0AndMax255(int val) {
-        if (val > 255) val = 255;
-        else if (val < 0) val = 0;
-        return val;
     }
 
-    public void resetColor(Color color) {
-        this.customColoursR[color.getRed() - 1] = color.getRed();
-        this.customColoursG[color.getGreen() - 1] = color.getGreen();
-        this.customColoursB[color.getBlue() - 1] = color.getBlue();
+    private Color blendColors(Color c1, Color c2, float ratio) {
+        float iRatio = 1.0f - ratio;
+        int r = (int)(c1.getRed() * iRatio + c2.getRed() * ratio);
+        int g = (int)(c1.getGreen() * iRatio + c2.getGreen() * ratio);
+        int b = (int)(c1.getBlue() * iRatio + c2.getBlue() * ratio);
+        return new Color(r, g, b);
+    }
+
+    public int mapColor(int originalColor, boolean isArmorLayer) {
+        Color color = new Color(originalColor);
+        float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+        float[] baseHsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
+
+        float newHue = baseHsb[0];
+        float newSaturation = Math.min(1f, hsb[1] + baseHsb[1] * 0.5f);
+        float newBrightness = hsb[2] * 0.8f + baseHsb[2] * 0.2f;
+
+        return Color.HSBtoRGB(newHue, newSaturation, newBrightness) & 0xFFFFFF;
     }
 }
