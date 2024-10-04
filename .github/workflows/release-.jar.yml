@@ -18,7 +18,7 @@ jobs:
         distribution: 'adopt'
 
     - name: Install rsync
-      run: apt install rsync
+      run: sudo apt install rsync
 
     - name: compile jar
       run: bash compile.sh
