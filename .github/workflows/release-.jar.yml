@@ -17,9 +17,6 @@ jobs:
         java-version: '8'
         distribution: 'adopt'
 
-    - name: Install rsync
-      run: sudo apt install rsync
-
     - name: compile jar
       run: bash compile.sh
 
@@ -29,6 +26,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: mcspritegen.jar
+        asset_path: /home/runner/work/sprite-generator-mc/sprite-generator-mc/mcspritegen.jar
         asset_name: mcspritegen.jar
         asset_content_type: application/java-archive
