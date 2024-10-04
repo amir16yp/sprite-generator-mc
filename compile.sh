@@ -48,9 +48,5 @@ echo "JAR file created: $PROJECT_DIR/$JAR_NAME"
 echo "Cleaning up .class files..."
 find $PROJECT_DIR/out -name "*.class" -delete
 
-# Step 6: Run the JAR file
-echo "Running the application..."
-java -jar $PROJECT_DIR/$JAR_NAME
-
 echo "Script execution completed."
 
