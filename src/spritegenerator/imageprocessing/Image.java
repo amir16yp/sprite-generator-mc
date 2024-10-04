@@ -67,7 +67,7 @@ public class Image {
                 if (alpha > 0) {
                     Color originalColor = new Color(rgb, true);
                     if (shouldTransformColor(originalColor)) {
-                        int newRgb = colourSet.mapColor(rgb & 0x00FFFFFF, isArmorLayer);
+                        int newRgb = colourSet.mapColor(rgb & 0x00FFFFFF);
                         image.setRGB(x, y, (alpha << 24) | (newRgb & 0x00FFFFFF));
                     }
                 }
